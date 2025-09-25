@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <form action="/submit" method="POST">
+        <label for="name">Name:</label>
+        <input type="text" id="name" name="name" required>
+
+        <label for="email">Email:</label>
+        <input type="email" id="email" name="email" required>
+
+        <input type="submit" value="Submit">
+    </form>
+
+    <div>
+        <input type="country" list="countries" placeholder="Country">
+        <datalist id="countries">
+            <option value="South Africa">
+            <option value="United States">
+            <option value="United Kingdom">
+            <option value="Australia">
+            <option value="Canada">
+        </datalist>
+    </div>
+
+    <div>
+        <input type="text" placeholder="Username">
+        <input type="password" placeholder="Password">
+    </div>
+
+    <div>
+        <input type="checkbox" id="subscribe" name="subscribe">
+        <label for="subscribe">Subscribe to newsletter</label>
+    </div>
+</body>
+</html>
