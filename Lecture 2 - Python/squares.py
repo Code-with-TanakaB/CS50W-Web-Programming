@@ -1,3 +1,3 @@
-import functions
+import functions #importing the functions module, which allows us to use the functions defined in that module in our current code. This is done using the import statement, which makes the functions available for use in this file.
 for i in range(5):
-    print(f"The square of {i} is {functions.square(i)}")
+    print(f"The square of {i} is {functions.square(i)}") #iterating over the numbers from 0 to 4 using a for loop. The range function generates a sequence of numbers, and the loop will execute the block of code inside the loop for each number in that sequence. For each number i in the range from 0 to 4, the loop will print a formatted string that includes the value of i and the result of calling the square function from the functions module with i as an argument. The f-string syntax allows for embedding expressions inside string literals, making it easy to include variable values in the output.

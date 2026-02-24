@@ -1,4 +1,4 @@
-n = int(input ("Number: "))
+n = int(input ("Number: ")) #function to get input from user and convert it to an integer
 
 if n > 0:
     print("n is positive")

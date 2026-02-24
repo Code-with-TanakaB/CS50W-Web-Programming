@@ -1,0 +1,2 @@
+for i in range(101): #iterating over the numbers from 0 to 100 using a for loop. The range function generates a sequence of numbers, and the loop will execute the block of code inside the loop for each number in that sequence.
+    print(i)

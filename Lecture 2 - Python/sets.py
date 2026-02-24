@@ -11,4 +11,4 @@ s.add(1)  # Duplicate, will be ignored
 s.remove(2)
 print(s)    
 
-print(f"The set has {len(s)} elements")
+print(f"The set has {len(s)} elements") #formatting string to print the number of elements in the set
