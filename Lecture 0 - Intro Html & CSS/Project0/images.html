@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Image Search</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    .top-nav {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      display: flex;
+      gap: 12px;
+      font-size: 13px;
+    }
+
+    .top-nav a {
+      color: #202124;
+      text-decoration: none;
+    }
+
+    .top-nav a:hover {
+      text-decoration: underline;
+    }
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding-bottom: 120px;
+    }
+
+    .logo {
+      font-size: 72px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      letter-spacing: -2px;
+    }
+
+    .logo span:nth-child(1) { color: #4285F4; }
+    .logo span:nth-child(2) { color: #EA4335; }
+    .logo span:nth-child(3) { color: #FBBC05; }
+    .logo span:nth-child(4) { color: #4285F4; }
+    .logo span:nth-child(5) { color: #34A853; }
+    .logo span:nth-child(6) { color: #EA4335; }
+
+    .logo-sub {
+      font-size: 22px;
+      color: #70757a;
+      margin-bottom: 28px;
+      font-weight: 400;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 580px;
+      padding: 0 16px;
+    }
+
+    .search-bar {
+      width: 100%;
+      padding: 12px 20px;
+      font-size: 16px;
+      border: 1px solid #dfe1e5;
+      border-radius: 24px;
+      outline: none;
+      box-shadow: none;
+      transition: box-shadow 0.2s, border-color 0.2s;
+      margin-bottom: 22px;
+    }
+
+    .search-bar:hover,
+    .search-bar:focus {
+      box-shadow: 0 1px 6px rgba(32,33,36,.28);
+      border-color: rgba(223,225,229,0);
+    }
+
+    .btn {
+      padding: 10px 20px;
+      font-size: 14px;
+      background-color: #f8f9fa;
+      border: 1px solid #f8f9fa;
+      border-radius: 4px;
+      color: #3c4043;
+      cursor: pointer;
+      transition: box-shadow 0.2s, border-color 0.2s;
+    }
+
+    .btn:hover {
+      box-shadow: 0 1px 1px rgba(0,0,0,.1);
+      border-color: #dadce0;
+    }
+
+    footer {
+      background-color: #f2f2f2;
+      border-top: 1px solid #e4e4e4;
+      padding: 14px 30px;
+      font-size: 13px;
+      color: #70757a;
+      display: flex;
+      justify-content: space-between;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="top-nav">
+    <a href="index.html">Google Search</a>
+  </nav>
+
+  <main class="main">
+    <div class="logo">
+      <span>G</span><span>o</span><span>o</span><span>g</span><span>l</span><span>e</span>
+    </div>
+    <div class="logo-sub">Images</div>
+
+    <form action="https://www.google.com/search" method="GET" target="_blank">
+      <input type="hidden" name="tbm" value="isch">
+      <input class="search-bar" type="text" name="q" placeholder="" aria-label="Image Search">
+      <button class="btn" type="submit">Google Image Search</button>
+    </form>
+  </main>
+
+  <footer>
+    <span>United States</span>
+    <div style="display:flex;gap:24px;">
+      <a href="#" style="color:#70757a;text-decoration:none;">Privacy</a>
+      <a href="#" style="color:#70757a;text-decoration:none;">Terms</a>
+      <a href="#" style="color:#70757a;text-decoration:none;">Settings</a>
+    </div>
+  </footer>
+
+</body>
+</html>
