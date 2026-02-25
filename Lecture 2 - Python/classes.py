@@ -3,6 +3,6 @@ class Point(): #defining a class called Point
         self.x = input1 #setting the x attribute of the class to the value of input1
         self.y = input2 #setting the y attribute of the class to the value of input2
 
-p = Point(2, 8)
+p = Point(2, 10)
 print(p.x)
 print(p.y)        
