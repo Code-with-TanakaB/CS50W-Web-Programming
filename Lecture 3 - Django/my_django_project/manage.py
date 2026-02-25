@@ -2,6 +2,9 @@
 import os
 import sys
 
+# Ensure the parent directory is on sys.path so 'my_django_project' is importable
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 def main():
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'my_django_project.settings')
     try:
