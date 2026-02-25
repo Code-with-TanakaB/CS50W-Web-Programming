@@ -21,6 +21,7 @@ DATABASES = {
 
 INSTALLED_APPS = [
     'myapp',
+    'newyear',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
