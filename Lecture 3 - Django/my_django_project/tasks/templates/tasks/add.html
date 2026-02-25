@@ -1,16 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tasks</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-<body>
-   <h1>Add a Task</h1>
-    <form action="/tasks/add/" method="post">
+{% extends "tasks/layout.html" %}
+
+{% block body %}
+   <h1 class="text-center">Add a Task</h1>
+    <form action="/tasks/add/" method="post" class="d-flex justify-content-center">
      {% csrf_token %}
      <input type="text" name="task" placeholder="Enter a task">
      <button type="submit">Add Task</button>
     </form>
-</body>
-</html>
+    <a href="{% url 'index' %}" class="btn btn-secondary mt-3 d-block mx-auto">Back to tasks</a>
+{% endblock %}
