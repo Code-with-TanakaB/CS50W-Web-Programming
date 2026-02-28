@@ -2,10 +2,10 @@
 
 {% block body %}
    <h1 class="text-center">Add a Task</h1>
-    <form action="/tasks/add/" method="post" class="d-flex justify-content-center">
+    <form action="{% url 'tasks:add' %}" method="post" class="d-flex justify-content-center">
      {% csrf_token %}
-     <input type="text" name="task" placeholder="Enter a task">
+     {{ form }}
      <button type="submit">Add Task</button>
     </form>
-    <a href="{% url 'index' %}" class="btn btn-secondary mt-3 d-block mx-auto">Back to tasks</a>
+    <a href="{% url 'tasks:index' %}" class="btn btn-secondary mt-3 d-block mx-auto">Back to tasks</a>
 {% endblock %}
