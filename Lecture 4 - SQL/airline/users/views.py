@@ -12,3 +12,6 @@ def login_view(request):
 
 def logout_view(request):
     pass
+
+def register(request):
+    return render(request, "users/register.html")
