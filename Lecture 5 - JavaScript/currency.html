@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Converter</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+</head>
+<body class="bg-light">
+
+    <div class="container py-5" style="max-width: 520px;">
+        <h1 class="fw-bold mb-1">Currency Converter</h1>
+        <p class="text-muted mb-4">Rates are fetched live from the Exchange Rate API (base: USD).</p>
+
+        <!-- ── Input form ──────────────────────────────────────────── -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+
+                <!-- Amount the user wants to convert -->
+                <div class="mb-3">
+                    <label for="amount" class="form-label fw-semibold">Amount (USD)</label>
+                    <input type="number" id="amount" class="form-control"
+                        placeholder="e.g. 100" min="0" step="any">
+                </div>
+
+                <!-- Target currency dropdown — populated by JS once rates load -->
+                <div class="mb-3">
+                    <label for="currency" class="form-label fw-semibold">Convert to</label>
+                    <select id="currency" class="form-select">
+                        <option value="">Loading currencies…</option>
+                    </select>
+                </div>
+
+                <button id="convert-btn" class="btn btn-primary w-100" disabled>Convert</button>
+            </div>
+        </div>
+
+        <!-- ── Result area ─────────────────────────────────────────── -->
+        <div id="result" class="alert alert-success d-none" role="alert"></div>
+        <div id="error"  class="alert alert-danger  d-none" role="alert"></div>
+    </div>
+
+    <script>
+        // Holds all exchange rates after the API response arrives
+        let rates = {};
+
+        // ── Fetch rates on page load ────────────────────────────────────────
+        // The callback is the SECOND argument — the closing ) was misplaced before
+        document.addEventListener("DOMContentLoaded", function() {
+
+            fetch("https://api.exchangerate-api.com/v4/latest/USD")
+                .then(function(response) {
+                    // Check for a non-2xx HTTP status
+                    if (!response.ok) throw new Error("Network response was not OK.");
+                    return response.json();
+                })
+                .then(function(data) {
+                    // Store the rates object globally so convert() can use it
+                    rates = data.rates;
+
+                    // Populate the <select> with every available currency
+                    const select = document.querySelector("#currency");
+                    select.innerHTML = ""; // clear the "Loading…" placeholder
+
+                    Object.keys(rates).sort().forEach(function(code) {
+                        const option = document.createElement("option");
+                        option.value       = code;
+                        option.textContent = code;
+                        select.appendChild(option);
+                    });
+
+                    // Enable the button now that rates are ready
+                    document.querySelector("#convert-btn").disabled = false;
+                })
+                .catch(function(err) {
+                    // Show a user-friendly error if the fetch fails
+                    showError("Could not load exchange rates: " + err.message);
+                });
+
+            // Wire up the Convert button
+            document.querySelector("#convert-btn").addEventListener("click", convert);
+        });
+
+        // ── Conversion logic ────────────────────────────────────────────────
+        function convert() {
+            const amount   = parseFloat(document.querySelector("#amount").value);
+            const currency = document.querySelector("#currency").value;
+
+            // Validate inputs
+            if (isNaN(amount) || amount < 0) {
+                return showError("Please enter a valid positive amount.");
+            }
+            if (!currency) return;
+
+            // Look up the rate and calculate
+            const rate   = rates[currency];
+            const result = (amount * rate).toFixed(2);
+
+            // Display result and hide any previous error
+            document.querySelector("#error").classList.add("d-none");
+            const resultEl = document.querySelector("#result");
+            resultEl.textContent = `${amount} USD = ${result} ${currency}`;
+            resultEl.classList.remove("d-none");
+        }
+
+        // ── Helpers ─────────────────────────────────────────────────────────
+        function showError(msg) {
+            document.querySelector("#result").classList.add("d-none");
+            const errEl = document.querySelector("#error");
+            errEl.textContent = msg;
+            errEl.classList.remove("d-none");
+        }
+    </script>
+
+</body>
+</html>

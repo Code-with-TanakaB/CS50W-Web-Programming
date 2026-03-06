@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Light</title>
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #1a1a2e;
+            margin: 0;
+            font-family: sans-serif;
+            color: #fff;
+        }
+
+        h1 {
+            margin-bottom: 2rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .traffic-light {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            background: #222;
+            border-radius: 20px;
+            padding: 24px 30px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
+        }
+
+        .bulb {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
+            background: #333;
+            transition: background 0.3s, box-shadow 0.3s;
+        }
+
+        .bulb.active-red    { background: #ff2200; box-shadow: 0 0 30px 10px rgba(255, 34,   0, 0.7); }
+        .bulb.active-yellow { background: #ffcc00; box-shadow: 0 0 30px 10px rgba(255, 204,  0, 0.7); }
+        .bulb.active-green  { background: #00cc44; box-shadow: 0 0 30px 10px rgba(  0, 204, 68, 0.7); }
+
+        #phase-label {
+            margin-top: 1.5rem;
+            font-size: 1.2rem;
+            letter-spacing: 1px;
+            min-height: 1.5em;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Traffic Light</h1>
+
+    <div class="traffic-light">
+        <div class="bulb" id="bulb-red"></div>
+        <div class="bulb" id="bulb-yellow"></div>
+        <div class="bulb" id="bulb-green"></div>
+    </div>
+
+    <p id="phase-label"></p>
+
+    <script>
+        // 6-second repeating cycle:
+        //  Red    → 2 s
+        //  Yellow → 1 s
+        //  Green  → 2 s
+        //  Yellow → 1 s  (total = 6 s)
+
+        const red    = document.getElementById("bulb-red");
+        const yellow = document.getElementById("bulb-yellow");
+        const green  = document.getElementById("bulb-green");
+        const label  = document.getElementById("phase-label");
+
+        const sequence = [
+            { bulb: red,    cls: "active-red",    text: "STOP",   duration: 2000 },
+            { bulb: yellow, cls: "active-yellow",  text: "READY",  duration: 1000 },
+            { bulb: green,  cls: "active-green",   text: "GO",     duration: 2000 },
+            { bulb: yellow, cls: "active-yellow",  text: "CAUTION",duration: 1000 },
+        ];
+
+        let step = 0;
+
+        function clearAll() {
+            red.classList.remove("active-red");
+            yellow.classList.remove("active-yellow");
+            green.classList.remove("active-green");
+        }
+
+        function runStep() {
+            clearAll();
+            const { bulb, cls, text, duration } = sequence[step];
+            bulb.classList.add(cls);
+            label.textContent = text;
+            step = (step + 1) % sequence.length;
+            setTimeout(runStep, duration);
+        }
+
+        runStep();
+    </script>
+
+</body>
+</html>

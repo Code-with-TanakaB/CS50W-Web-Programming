@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Local Storage Demo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <style>
+        /* Give each stored item a clear card-like row */
+        .item-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .item-row:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body class="bg-light">
+
+    <div class="container py-5" style="max-width: 600px;">
+        <h1 class="mb-1 fw-bold">Local Storage Notes</h1>
+        <p class="text-muted mb-4">Items are saved in your browser and survive page refreshes.</p>
+
+        <!-- ── Input Form ─────────────────────────────────────────── -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <div class="mb-3">
+                    <!-- Note title -->
+                    <label for="item-title" class="form-label fw-semibold">Title</label>
+                    <input type="text" id="item-title" class="form-control"
+                        placeholder="e.g. Shopping list">
+                </div>
+                <div class="mb-3">
+                    <!-- Note body -->
+                    <label for="item-body" class="form-label fw-semibold">Note</label>
+                    <textarea id="item-body" class="form-control" rows="3"
+                        placeholder="Write something…"></textarea>
+                </div>
+                <!-- Save button triggers saveItem() -->
+                <button id="save-btn" class="btn btn-primary w-100">Save to Local Storage</button>
+            </div>
+        </div>
+
+        <!-- ── Stored Items Display ───────────────────────────────── -->
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span class="fw-semibold">Stored Items <span id="item-count" class="badge bg-secondary ms-1">0</span></span>
+                <!-- Clears every entry from localStorage -->
+                <button id="clear-btn" class="btn btn-sm btn-outline-danger">Clear All</button>
+            </div>
+            <!-- Items are injected here by renderItems() -->
+            <ul id="items-list" class="list-group list-group-flush">
+                <li class="list-group-item text-muted fst-italic">No items saved yet.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        // ── Constants ──────────────────────────────────────────────────────────
+        // Key used to read/write our notes array in localStorage
+        const STORAGE_KEY = "ls_notes";
+
+        // ── Helpers ────────────────────────────────────────────────────────────
+
+        /**
+         * Loads the notes array from localStorage.
+         * Returns an empty array if nothing has been saved yet.
+         */
+        function loadItems() {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            // JSON.parse returns null if raw is null, so fall back to []
+            return raw ? JSON.parse(raw) : [];
+        }
+
+        /**
+         * Persists the given notes array to localStorage as a JSON string.
+         * @param {Array} items - Array of { id, title, body, date } objects
+         */
+        function saveItems(items) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+        }
+
+        /**
+         * Reads all notes from localStorage and renders them into the list.
+         * Also updates the badge counter.
+         */
+        function renderItems() {
+            const list  = document.querySelector("#items-list");
+            const badge = document.querySelector("#item-count");
+            const items = loadItems();
+
+            // Update the count badge
+            badge.textContent = items.length;
+
+            // Clear the current list before re-rendering
+            list.innerHTML = "";
+
+            if (items.length === 0) {
+                // Show placeholder when there's nothing stored
+                list.innerHTML = '<li class="list-group-item text-muted fst-italic">No items saved yet.</li>';
+                return;
+            }
+
+            // Build a list-item for every stored note
+            items.forEach(function(item) {
+                const li = document.createElement("li");
+                li.className = "list-group-item item-row";
+                li.innerHTML = `
+                    <div>
+                        <strong>${escapeHTML(item.title)}</strong>
+                        <p class="mb-0 text-muted small">${escapeHTML(item.body)}</p>
+                        <small class="text-secondary">${item.date}</small>
+                    </div>
+                    <!-- Delete button removes only this item by its unique id -->
+                    <button class="btn btn-sm btn-outline-danger ms-3"
+                        onclick="deleteItem('${item.id}')">Delete</button>
+                `;
+                list.appendChild(li);
+            });
+        }
+
+        /**
+         * Sanitises a string to prevent XSS when injecting user text into innerHTML.
+         * @param {string} str - Raw user input
+         * @returns {string} HTML-escaped string
+         */
+        function escapeHTML(str) {
+            const div = document.createElement("div");
+            div.appendChild(document.createTextNode(str));
+            return div.innerHTML;
+        }
+
+        // ── Actions ────────────────────────────────────────────────────────────
+
+        /**
+         * Reads the input fields, creates a new note object,
+         * appends it to the stored array, and refreshes the view.
+         */
+        function saveItem() {
+            const titleInput = document.querySelector("#item-title");
+            const bodyInput  = document.querySelector("#item-body");
+
+            const title = titleInput.value.trim();
+            const body  = bodyInput.value.trim();
+
+            // Validate: require at least a title
+            if (!title) {
+                titleInput.classList.add("is-invalid");
+                return;
+            }
+            titleInput.classList.remove("is-invalid");
+
+            // Build the note object with a simple unique id and timestamp
+            const note = {
+                id:    Date.now().toString(),   // unique numeric id as string
+                title: title,
+                body:  body,
+                date:  new Date().toLocaleString()
+            };
+
+            // Load existing notes, add the new one, then save back
+            const items = loadItems();
+            items.push(note);
+            saveItems(items);
+
+            // Clear the input fields after saving
+            titleInput.value = "";
+            bodyInput.value  = "";
+
+            // Re-render the list to show the new item
+            renderItems();
+        }
+
+        /**
+         * Removes a single note from localStorage by its id.
+         * @param {string} id - The unique id of the note to delete
+         */
+        function deleteItem(id) {
+            // Filter out the note with the matching id
+            const updated = loadItems().filter(function(item) {
+                return item.id !== id;
+            });
+            saveItems(updated);
+            renderItems();
+        }
+
+        /**
+         * Removes the entire notes array from localStorage
+         * and re-renders the (now empty) list.
+         */
+        function clearAll() {
+            localStorage.removeItem(STORAGE_KEY);
+            renderItems();
+        }
+
+        // ── Event Listeners ────────────────────────────────────────────────────
+        document.addEventListener("DOMContentLoaded", function() {
+            // Render any notes that were already saved before the page loaded
+            renderItems();
+
+            // Wire up the Save button
+            document.querySelector("#save-btn").addEventListener("click", saveItem);
+
+            // Wire up the Clear All button
+            document.querySelector("#clear-btn").addEventListener("click", clearAll);
+
+            // Allow pressing Enter in the title field to save
+            document.querySelector("#item-title").addEventListener("keydown", function(e) {
+                if (e.key === "Enter") saveItem();
+            });
+        });
+    </script>
+
+</body>
+</html>
