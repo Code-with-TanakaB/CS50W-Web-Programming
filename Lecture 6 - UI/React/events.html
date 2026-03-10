@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React - Events</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 2rem; background: #f0f4f8; }
+        h1, h2 { color: #1e293b; }
+        .box {
+            background: white; border-radius: 8px; padding: 1.5rem;
+            max-width: 520px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        button {
+            margin: 0.25rem; padding: 0.5rem 1.25rem; font-size: 1rem;
+            border: none; border-radius: 6px; cursor: pointer;
+            background: #2563eb; color: white; transition: background 0.2s;
+        }
+        button:hover { background: #1d4ed8; }
+        .color-box {
+            width: 100%; height: 80px; border-radius: 6px;
+            margin-bottom: 0.75rem; transition: background 0.3s;
+        }
+        .log {
+            background: #1e293b; color: #94a3b8; font-family: monospace;
+            padding: 0.75rem 1rem; border-radius: 6px; font-size: 0.85rem;
+            max-height: 120px; overflow-y: auto;
+        }
+        .log p { margin: 0.1rem 0; }
+        input {
+            padding: 0.5rem; font-size: 1rem; border: 1px solid #cbd5e1;
+            border-radius: 6px; margin-right: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+
+        const { useState } = React;
+
+        // ─── Event handling in React ──────────────────────────────────────────────────
+        // React uses synthetic events — a cross-browser wrapper around native DOM events.
+        // Event handler names are camelCase:  onClick, onChange, onSubmit, onMouseEnter…
+        // You pass a FUNCTION REFERENCE (or inline arrow function), not a string.
+        //
+        //   ✅  onClick={handleClick}        — correct: passes the function
+        //   ✅  onClick={() => doSomething()} — correct: arrow function wrapper
+        //   ❌  onClick={handleClick()}       — wrong: calls the function immediately on render
+
+
+        // ─── Demo 1: Click events & event object ──────────────────────────────────────
+        function ClickDemo() {
+            const [log, setLog] = useState([]);
+
+            // The event handler receives a synthetic event object as its first argument.
+            // event.target refers to the DOM element that was clicked.
+            const handleClick = (event) => {
+                const msg = `Clicked: ${event.target.innerText}`;
+                // Prepend the new message so newest entries appear at the top
+                setLog(prev => [msg, ...prev].slice(0, 6));
+            };
+
+            // Passing extra data to a handler using an arrow function wrapper
+            const handleColour = (colour) => {
+                setLog(prev => [`Colour picked: ${colour}`, ...prev].slice(0, 6));
+            };
+
+            return (
+                <div className="box">
+                    <h2>Demo 1 — Click Events</h2>
+                    <button onClick={handleClick}>Button A</button>
+                    <button onClick={handleClick}>Button B</button>
+                    {/* Arrow function wrapper lets us pass a custom argument to the handler */}
+                    <button onClick={() => handleColour('Red')}>Red</button>
+                    <button onClick={() => handleColour('Blue')}>Blue</button>
+
+                    {log.length > 0 && (
+                        <div className="log" style={{ marginTop: '0.75rem' }}>
+                            {log.map((entry, i) => <p key={i}>&gt; {entry}</p>)}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+
+        // ─── Demo 2: Mouse events ─────────────────────────────────────────────────────
+        function MouseDemo() {
+            const [colour, setColour] = useState('#e2e8f0');
+            const [label, setLabel] = useState('Hover or click the box');
+
+            const colours = ['#fca5a5', '#86efac', '#93c5fd', '#fde68a', '#c4b5fd'];
+            let colourIndex = 0;
+
+            return (
+                <div className="box">
+                    <h2>Demo 2 — Mouse Events</h2>
+                    {/* onMouseEnter / onMouseLeave fire when the cursor enters or leaves */}
+                    {/* onClick changes the colour on each click                          */}
+                    <div
+                        className="color-box"
+                        style={{ background: colour }}
+                        onMouseEnter={() => setLabel('Mouse is inside!')}
+                        onMouseLeave={() => setLabel('Mouse left the box')}
+                        onClick={() => {
+                            colourIndex = (colourIndex + 1) % colours.length;
+                            setColour(colours[Math.floor(Math.random() * colours.length)]);
+                            setLabel('Clicked — colour changed!');
+                        }}
+                    />
+                    <p style={{ color: '#475569' }}>{label}</p>
+                </div>
+            );
+        }
+
+
+        // ─── Demo 3: Form & keyboard events ──────────────────────────────────────────
+        // onSubmit fires when a form is submitted (button click OR pressing Enter).
+        // We call event.preventDefault() to stop the browser's default page reload.
+        function FormDemo() {
+            const [inputVal, setInputVal] = useState('');
+            const [submitted, setSubmitted] = useState('');
+            const [keyLog, setKeyLog] = useState('');
+
+            const handleSubmit = (event) => {
+                // IMPORTANT: prevent the browser from refreshing the page
+                event.preventDefault();
+                setSubmitted(inputVal);
+                setInputVal('');
+            };
+
+            // onKeyDown fires on every key press; event.key holds the key name
+            const handleKeyDown = (event) => {
+                setKeyLog(`Last key pressed: "${event.key}" (code: ${event.code})`);
+            };
+
+            return (
+                <div className="box">
+                    <h2>Demo 3 — Form &amp; Keyboard Events</h2>
+                    {/* onSubmit on the <form> handles both Enter key and button click */}
+                    <form onSubmit={handleSubmit}>
+                        <input
+                            value={inputVal}
+                            onChange={e => setInputVal(e.target.value)}
+                            onKeyDown={handleKeyDown}
+                            placeholder="Type and press Enter or Submit…"
+                        />
+                        <button type="submit">Submit</button>
+                    </form>
+                    {submitted && <p>✅ Submitted: <strong>{submitted}</strong></p>}
+                    {keyLog && <p style={{ color: '#64748b', fontSize: '0.9rem' }}>{keyLog}</p>}
+                </div>
+            );
+        }
+
+
+        // ─── Demo 4: Event bubbling & stopPropagation ─────────────────────────────────
+        // Events bubble UP through the DOM: clicking a child also fires the parent's handler.
+        // Call event.stopPropagation() in the child to prevent this.
+        function BubblingDemo() {
+            const [log, setLog] = useState([]);
+
+            const addLog = (msg) => setLog(prev => [msg, ...prev].slice(0, 5));
+
+            return (
+                <div className="box">
+                    <h2>Demo 4 — Event Bubbling</h2>
+                    <p style={{ fontSize: '0.9rem', color: '#64748b' }}>
+                        Click the inner (dark) box vs the outer (light) box to see bubbling.
+                        The "Stop" button prevents the click from reaching the outer handler.
+                    </p>
+                    {/* Outer handler */}
+                    <div
+                        onClick={() => addLog('Outer DIV clicked')}
+                        style={{ background: '#dbeafe', padding: '1.5rem', borderRadius: '6px', cursor: 'pointer' }}
+                    >
+                        Outer DIV
+                        {/* Inner handler — clicking here ALSO fires the outer handler (bubbling) */}
+                        <div
+                            onClick={() => addLog('Inner DIV clicked (bubbles to outer too)')}
+                            style={{ background: '#2563eb', color: 'white', margin: '0.5rem', padding: '0.75rem', borderRadius: '4px', cursor: 'pointer' }}
+                        >
+                            Inner DIV (bubbles)
+                        </div>
+                        {/* stopPropagation prevents the click from reaching the outer div */}
+                        <div
+                            onClick={(e) => { e.stopPropagation(); addLog('Stop DIV clicked (no bubbling)'); }}
+                            style={{ background: '#16a34a', color: 'white', margin: '0.5rem', padding: '0.75rem', borderRadius: '4px', cursor: 'pointer' }}
+                        >
+                            Inner DIV (stopPropagation)
+                        </div>
+                    </div>
+                    {log.length > 0 && (
+                        <div className="log" style={{ marginTop: '0.75rem' }}>
+                            {log.map((entry, i) => <p key={i}>&gt; {entry}</p>)}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+
+        function App() {
+            return (
+                <div>
+                    <h1>React Fundamentals — Event Handling</h1>
+                    <ClickDemo />
+                    <MouseDemo />
+                    <FormDemo />
+                    <BubblingDemo />
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+    </script>
+</body>
+</html>

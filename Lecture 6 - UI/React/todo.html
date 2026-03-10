@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React - Todo App</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            font-family: sans-serif; margin: 0; padding: 2rem;
+            background: #f0f4f8; min-height: 100vh;
+        }
+        h1 { color: #1e293b; margin-bottom: 1.5rem; }
+        .app { max-width: 520px; }
+
+        /* ── Add-task form ── */
+        .add-form { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+        .add-form input {
+            flex: 1; padding: 0.6rem 0.9rem; font-size: 1rem;
+            border: 1px solid #cbd5e1; border-radius: 6px; outline: none;
+        }
+        .add-form input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px #bfdbfe; }
+        .add-form button {
+            padding: 0.6rem 1.2rem; font-size: 1rem;
+            background: #2563eb; color: white; border: none;
+            border-radius: 6px; cursor: pointer; white-space: nowrap;
+        }
+        .add-form button:hover { background: #1d4ed8; }
+
+        /* ── Filter tabs ── */
+        .filters { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+        .filters button {
+            padding: 0.4rem 1rem; border: 1px solid #cbd5e1; background: white;
+            border-radius: 999px; cursor: pointer; font-size: 0.9rem; color: #475569;
+        }
+        .filters button.active {
+            background: #2563eb; color: white; border-color: #2563eb;
+        }
+
+        /* ── Todo list ── */
+        .todo-list { list-style: none; padding: 0; margin: 0; }
+        .todo-item {
+            display: flex; align-items: center; gap: 0.75rem;
+            background: white; border-radius: 8px; padding: 0.75rem 1rem;
+            margin-bottom: 0.5rem; box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+            animation: slideIn 0.2s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(-6px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .todo-item input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; accent-color: #2563eb; }
+        .todo-item span {
+            flex: 1; font-size: 1rem; color: #1e293b; transition: all 0.2s;
+        }
+        .todo-item span.done {
+            text-decoration: line-through; color: #94a3b8;
+        }
+        .todo-item .delete-btn {
+            background: none; border: none; cursor: pointer;
+            color: #94a3b8; font-size: 1.1rem; padding: 0 0.25rem;
+        }
+        .todo-item .delete-btn:hover { color: #dc2626; }
+
+        /* ── Footer stats ── */
+        .footer {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-top: 0.75rem; font-size: 0.9rem; color: #64748b;
+        }
+        .clear-btn {
+            background: none; border: none; cursor: pointer;
+            color: #dc2626; font-size: 0.9rem; padding: 0;
+        }
+        .clear-btn:hover { text-decoration: underline; }
+        .empty { text-align: center; color: #94a3b8; padding: 2rem 0; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+
+        // This file is the "putting it all together" demo.
+        // It combines: components, props, state, event handling, and list rendering.
+
+        const { useState } = React;
+
+        // ─── TodoItem component ───────────────────────────────────────────────────────
+        // Responsible for rendering a single task row.
+        // It receives props from the parent (App) and calls parent callbacks to modify state.
+        //
+        // Key principle: data flows DOWN (props), events flow UP (callback functions).
+        function TodoItem({ todo, onToggle, onDelete }) {
+            return (
+                <li className="todo-item">
+                    {/* Checkbox: fires onToggle with this todo's id */}
+                    <input
+                        type="checkbox"
+                        checked={todo.done}
+                        // onChange is required on controlled checkboxes; we delegate to parent
+                        onChange={() => onToggle(todo.id)}
+                    />
+                    {/* Apply a "done" CSS class when the task is completed */}
+                    <span className={todo.done ? 'done' : ''}>{todo.text}</span>
+                    {/* Delete button: fires onDelete with this todo's id */}
+                    <button className="delete-btn" onClick={() => onDelete(todo.id)} title="Delete">✕</button>
+                </li>
+            );
+        }
+
+        // ─── FilterBar component ──────────────────────────────────────────────────────
+        // Renders three filter buttons. The active filter is highlighted.
+        // When the user clicks a button it calls onFilter (a callback from App) to
+        // update the filter in the parent's state.
+        function FilterBar({ current, onFilter }) {
+            const filters = ['All', 'Active', 'Completed'];
+            return (
+                <div className="filters">
+                    {filters.map(f => (
+                        <button
+                            key={f}
+                            // Conditional className: add "active" only for the selected filter
+                            className={current === f ? 'active' : ''}
+                            onClick={() => onFilter(f)}
+                        >
+                            {f}
+                        </button>
+                    ))}
+                </div>
+            );
+        }
+
+        // ─── App component ────────────────────────────────────────────────────────────
+        // This is the "single source of truth" — all state lives here.
+        // Child components receive data and callbacks via props.
+        function App() {
+
+            // ── state: the master list of todos (array of objects) ──
+            const [todos, setTodos] = useState([
+                { id: 1, text: 'Learn React fundamentals', done: true  },
+                { id: 2, text: 'Build a todo app',         done: false },
+                { id: 3, text: 'Add filtering',            done: false },
+            ]);
+
+            // ── state: current text in the input box ──
+            const [inputText, setInputText] = useState('');
+
+            // ── state: which filter tab is selected ──
+            const [filter, setFilter] = useState('All');
+
+            // ── nextId: a simple incrementing counter for unique ids ──
+            // Using useState so it persists across renders
+            const [nextId, setNextId] = useState(4);
+
+
+            // ── Handler: add a new todo ──
+            const handleAdd = (e) => {
+                e.preventDefault();                       // prevent form from reloading the page
+                const trimmed = inputText.trim();
+                if (!trimmed) return;                    // ignore empty input
+
+                // ALWAYS create a new array — never push() to the existing one.
+                // React compares references to detect changes; mutating the old
+                // array won't trigger a re-render.
+                setTodos(prev => [...prev, { id: nextId, text: trimmed, done: false }]);
+                setNextId(n => n + 1);
+                setInputText('');                        // clear the input after adding
+            };
+
+
+            // ── Handler: toggle a todo's done status ──
+            const handleToggle = (id) => {
+                // map() returns a new array, which is what React needs
+                setTodos(prev =>
+                    prev.map(todo =>
+                        // Only flip done for the todo with the matching id
+                        todo.id === id ? { ...todo, done: !todo.done } : todo
+                    )
+                );
+            };
+
+
+            // ── Handler: delete a todo ──
+            const handleDelete = (id) => {
+                // filter() returns a new array without the deleted item
+                setTodos(prev => prev.filter(todo => todo.id !== id));
+            };
+
+
+            // ── Handler: clear all completed todos ──
+            const handleClearCompleted = () => {
+                setTodos(prev => prev.filter(todo => !todo.done));
+            };
+
+
+            // ── Derived data (computed from state, not stored separately) ──
+            // These recalculate automatically on every render
+            const filteredTodos = todos.filter(todo => {
+                if (filter === 'Active')    return !todo.done;
+                if (filter === 'Completed') return  todo.done;
+                return true; // 'All'
+            });
+
+            const remainingCount = todos.filter(t => !t.done).length;
+            const hasCompleted   = todos.some(t => t.done);
+
+
+            return (
+                <div className="app">
+                    <h1>📝 Todo App</h1>
+
+                    {/* ── Add-task form ── */}
+                    <form className="add-form" onSubmit={handleAdd}>
+                        <input
+                            value={inputText}
+                            onChange={e => setInputText(e.target.value)}
+                            placeholder="What needs to be done?"
+                        />
+                        <button type="submit">Add</button>
+                    </form>
+
+                    {/* ── Filter tabs ── */}
+                    {/* Pass the current filter and the setter callback down as props */}
+                    <FilterBar current={filter} onFilter={setFilter} />
+
+                    {/* ── Render the filtered list ── */}
+                    {filteredTodos.length === 0 ? (
+                        <p className="empty">No tasks here!</p>
+                    ) : (
+                        <ul className="todo-list">
+                            {filteredTodos.map(todo => (
+                                // Pass each todo object and the handler callbacks as props
+                                <TodoItem
+                                    key={todo.id}       // unique key required for lists
+                                    todo={todo}
+                                    onToggle={handleToggle}
+                                    onDelete={handleDelete}
+                                />
+                            ))}
+                        </ul>
+                    )}
+
+                    {/* ── Footer ── */}
+                    <div className="footer">
+                        <span>{remainingCount} item{remainingCount !== 1 ? 's' : ''} left</span>
+                        {/* Show "Clear completed" only if there are completed todos */}
+                        {hasCompleted && (
+                            <button className="clear-btn" onClick={handleClearCompleted}>
+                                Clear completed
+                            </button>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+    </script>
+</body>
+</html>

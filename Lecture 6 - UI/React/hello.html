@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React - Hello World</title>
+
+    <!-- React core library: provides React.createElement, Component, hooks, etc. -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+
+    <!-- ReactDOM: responsible for rendering React components into the actual browser DOM -->
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+    <!-- Babel: transforms JSX (HTML-like syntax inside JS) into plain JavaScript in the browser.
+         In production you would pre-compile with a build tool, but this is fine for learning. -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        body { font-family: sans-serif; padding: 2rem; background: #f0f4f8; }
+        .box { background: white; border-radius: 8px; padding: 1.5rem; max-width: 500px;
+               box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 1rem; }
+        h2 { color: #2563eb; }
+    </style>
+</head>
+<body>
+
+    <!-- Root element: React will inject all UI into this single div.
+         This is the "mounting point" — React takes over everything inside it. -->
+    <div id="root"></div>
+
+    <!-- type="text/babel" tells Babel to transpile this script block before running it -->
+    <script type="text/babel">
+
+        // ─── What is JSX? ───────────────────────────────────────────────────────────
+        // JSX lets you write HTML-like markup directly inside JavaScript.
+        // Under the hood, Babel converts  <h1>Hello</h1>
+        // into  React.createElement('h1', null, 'Hello')
+        // You don't need to know that detail — just write JSX!
+
+        // ─── A simple functional component ──────────────────────────────────────────
+        // A React component is just a JavaScript function that returns JSX.
+        // Component names MUST start with a capital letter so React can tell
+        // them apart from regular HTML tags.
+        function Greeting() {
+            return (
+                // JSX rule: every component must return ONE root element.
+                // We wrap everything in a <div> (or use an empty <> fragment).
+                <div className="box">
+                    {/* In JSX, use className instead of class (class is a JS keyword) */}
+                    <h2>Hello, React! 👋</h2>
+                    <p>This is a React component rendering inside the browser.</p>
+
+                    {/* Curly braces { } let you embed any JavaScript expression in JSX */}
+                    <p>The current year is: <strong>{new Date().getFullYear()}</strong></p>
+
+                    {/* Arrays of JSX are also valid — React renders each item */}
+                    <ul>
+                        {['Fast', 'Declarative', 'Component-based'].map(word => (
+                            // When rendering lists, React needs a unique "key" prop
+                            // to efficiently track which items changed.
+                            <li key={word}>{word}</li>
+                        ))}
+                    </ul>
+                </div>
+            );
+        }
+
+        // ─── The App component ───────────────────────────────────────────────────────
+        // By convention we have a top-level <App /> that composes all other components.
+        function App() {
+            return (
+                <div>
+                    <h1>React Fundamentals — Hello World</h1>
+                    {/* Place custom components just like HTML tags */}
+                    <Greeting />
+                    <div className="box">
+                        <h2>Why React?</h2>
+                        <p>React keeps the UI in sync with data automatically.
+                           When data (state) changes, React re-renders only
+                           the affected parts of the page — very efficiently.</p>
+                    </div>
+                </div>
+            );
+        }
+
+        // ─── Mounting (rendering) the App ────────────────────────────────────────────
+        // ReactDOM.createRoot() targets our <div id="root"> and hands control to React.
+        // .render() paints the <App /> component (and all its children) to the screen.
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+    </script>
+</body>
+</html>

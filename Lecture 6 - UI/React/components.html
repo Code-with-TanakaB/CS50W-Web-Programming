@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React - Components & Props</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 2rem; background: #f0f4f8; }
+        h1 { color: #1e293b; }
+        .card {
+            background: white; border-radius: 8px; padding: 1rem 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 1rem;
+            max-width: 400px;
+        }
+        .card h3 { margin: 0 0 0.25rem; color: #2563eb; }
+        .card p  { margin: 0; color: #475569; }
+        .badge {
+            display: inline-block; background: #2563eb; color: white;
+            border-radius: 999px; padding: 0.15rem 0.75rem; font-size: 0.8rem;
+        }
+        .grid { display: flex; flex-wrap: wrap; gap: 1rem; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+
+        // ─── Props ───────────────────────────────────────────────────────────────────
+        // Props (short for "properties") are how a parent component passes data DOWN
+        // to a child component — just like HTML attributes.
+        //
+        // Rule: props are READ-ONLY inside the child.
+        // The child should never modify the props it receives.
+
+        // ─── Profile card component ──────────────────────────────────────────────────
+        // The function parameter is conventionally called "props".
+        // It is a plain JavaScript object containing all the attributes you passed.
+        function ProfileCard(props) {
+            return (
+                <div className="card">
+                    {/* Access each prop with dot notation */}
+                    <h3>{props.name}</h3>
+                    <p>{props.role}</p>
+                    {/* Conditional rendering: show the badge only if "featured" prop is true */}
+                    {props.featured && <span className="badge">⭐ Featured</span>}
+                </div>
+            );
+        }
+
+        // ─── Destructuring props ─────────────────────────────────────────────────────
+        // A cleaner pattern: destructure props directly in the function signature.
+        // Instead of props.name, props.age — just write name, age.
+        function StudentCard({ name, course, grade }) {
+            // Default value pattern: if grade is not passed, fall back to "N/A"
+            const displayGrade = grade ?? 'N/A';
+
+            return (
+                <div className="card">
+                    <h3>{name}</h3>
+                    <p>Course: {course}</p>
+                    <p>Grade: <strong>{displayGrade}</strong></p>
+                </div>
+            );
+        }
+
+        // ─── children prop ───────────────────────────────────────────────────────────
+        // Every component automatically receives a special "children" prop.
+        // It holds whatever JSX is placed BETWEEN the opening and closing tags.
+        function Section({ title, children }) {
+            return (
+                <div style={{ marginBottom: '2rem' }}>
+                    <h2 style={{ borderBottom: '2px solid #2563eb', paddingBottom: '0.5rem' }}>
+                        {title}
+                    </h2>
+                    {/* Render whatever was nested inside <Section>...</Section> */}
+                    {children}
+                </div>
+            );
+        }
+
+        // ─── App — composing all components together ─────────────────────────────────
+        function App() {
+            // Data lives in the parent and is passed DOWN as props.
+            // This is called "lifting state up" — centralising data at the top.
+            const team = [
+                { name: 'Alice',   role: 'Frontend Developer', featured: true  },
+                { name: 'Bob',     role: 'Backend Developer',  featured: false },
+                { name: 'Charlie', role: 'UI Designer',        featured: true  },
+            ];
+
+            const students = [
+                { name: 'Diana', course: 'CS50W', grade: 'A' },
+                { name: 'Evan',  course: 'CS50P'             },  // no grade passed
+            ];
+
+            return (
+                <div>
+                    <h1>React Fundamentals — Components &amp; Props</h1>
+
+                    {/* ── Passing individual props ── */}
+                    <Section title="Team Members (individual props)">
+                        <div className="grid">
+                            {/* Map over data array → render one card per item.
+                                The "key" prop must be unique and stable — it helps
+                                React track list order efficiently. */}
+                            {team.map(member => (
+                                <ProfileCard
+                                    key={member.name}
+                                    name={member.name}
+                                    role={member.role}
+                                    featured={member.featured}
+                                />
+                            ))}
+                        </div>
+                    </Section>
+
+                    {/* ── Spread operator shorthand ── */}
+                    {/* Instead of listing every prop manually, spread the whole object */}
+                    <Section title="Students (spread props shorthand)">
+                        <div className="grid">
+                            {students.map(s => (
+                                // {...s} is equivalent to  name={s.name} course={s.course} grade={s.grade}
+                                <StudentCard key={s.name} {...s} />
+                            ))}
+                        </div>
+                    </Section>
+
+                    {/* ── children prop ── */}
+                    <Section title="Children Prop Demo">
+                        <div className="card">
+                            <p>This paragraph is passed as the <code>children</code> prop
+                               of the Section component above. Any JSX between opening
+                               and closing tags becomes <code>props.children</code>.</p>
+                        </div>
+                    </Section>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+    </script>
+</body>
+</html>

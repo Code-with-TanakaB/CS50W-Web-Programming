@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplication Game</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        body {
+            margin: 0; font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1e3a5f, #2563eb);
+            min-height: 100vh; display: flex;
+            align-items: center; justify-content: center;
+        }
+        .card {
+            background: white; border-radius: 16px; padding: 2.5rem 2rem;
+            width: 100%; max-width: 440px; box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+
+        /* ── Progress bar ── */
+        .progress-track {
+            background: #e2e8f0; border-radius: 999px; height: 8px; margin-bottom: 0.5rem;
+        }
+        .progress-fill {
+            height: 8px; border-radius: 999px;
+            background: linear-gradient(90deg, #2563eb, #7c3aed);
+            transition: width 0.4s ease;
+        }
+        .progress-label { font-size: 0.85rem; color: #64748b; margin-bottom: 1.5rem; }
+
+        /* ── Question ── */
+        .question {
+            font-size: 2.8rem; font-weight: 800; color: #1e293b;
+            margin: 0.5rem 0 1.5rem;
+        }
+
+        /* ── Answer choices ── */
+        .choices {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 0.75rem; margin-bottom: 1.25rem;
+        }
+        .choice-btn {
+            padding: 0.85rem; font-size: 1.3rem; font-weight: 700;
+            border: 2px solid #e2e8f0; border-radius: 10px;
+            background: #f8fafc; color: #1e293b;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .choice-btn:hover:not(:disabled) {
+            background: #dbeafe; border-color: #2563eb; color: #2563eb;
+        }
+        .choice-btn.correct  { background: #dcfce7; border-color: #16a34a; color: #15803d; }
+        .choice-btn.wrong    { background: #fee2e2; border-color: #dc2626; color: #dc2626; }
+        .choice-btn:disabled { cursor: default; }
+
+        /* ── Feedback ── */
+        .feedback {
+            font-size: 1rem; font-weight: 600; min-height: 1.4rem;
+            margin-bottom: 0.5rem;
+        }
+        .feedback.ok  { color: #16a34a; }
+        .feedback.bad { color: #dc2626; }
+
+        /* ── Result screen ── */
+        .result-emoji { font-size: 4rem; margin-bottom: 0.5rem; }
+        .result-title { font-size: 2rem; font-weight: 800; margin-bottom: 0.25rem; }
+        .result-score { font-size: 1.1rem; color: #475569; margin-bottom: 0.5rem; }
+        .result-pct   { font-size: 3rem; font-weight: 900; margin-bottom: 1.5rem; }
+        .win  { color: #15803d; }
+        .lose { color: #dc2626; }
+
+        .restart-btn {
+            padding: 0.75rem 2rem; font-size: 1.1rem; font-weight: 700;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: white; border: none; border-radius: 10px;
+            cursor: pointer; transition: opacity 0.2s;
+        }
+        .restart-btn:hover { opacity: 0.85; }
+
+        /* ── Start screen ── */
+        .start-title { font-size: 2rem; font-weight: 800; color: #1e293b; margin-bottom: 0.5rem; }
+        .start-sub   { color: #64748b; margin-bottom: 1.5rem; line-height: 1.6; }
+        .start-btn {
+            padding: 0.85rem 2.5rem; font-size: 1.2rem; font-weight: 700;
+            background: linear-gradient(135deg, #2563eb, #7c3aed);
+            color: white; border: none; border-radius: 10px;
+            cursor: pointer; transition: opacity 0.2s;
+        }
+        .start-btn:hover { opacity: 0.85; }
+    </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+
+    const { useState, useCallback } = React;
+
+    const TOTAL_QUESTIONS = 10;
+    const WIN_THRESHOLD   = 0.7;  // 70%
+
+    // ─── Helper: generate a random integer between min and max (inclusive) ──────
+    const randInt = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+    // ─── Helper: generate one question object ────────────────────────────────────
+    // Each question has two factors, the correct answer, and three wrong choices.
+    function generateQuestion() {
+        const a = randInt(2, 12);
+        const b = randInt(2, 12);
+        const correct = a * b;
+
+        // Build a Set of wrong answers so there are no duplicates
+        const wrongSet = new Set();
+        while (wrongSet.size < 3) {
+            // Offset the correct answer by a small random amount
+            const offset = randInt(1, 5) * (Math.random() < 0.5 ? 1 : -1);
+            const candidate = correct + offset;
+            if (candidate > 0 && candidate !== correct) wrongSet.add(candidate);
+        }
+
+        // Mix correct answer into the choices and shuffle
+        const choices = [correct, ...wrongSet];
+        choices.sort(() => Math.random() - 0.5);
+
+        return { a, b, correct, choices };
+    }
+
+    // ─── Helper: generate an array of TOTAL_QUESTIONS question objects ───────────
+    function generateQuiz() {
+        return Array.from({ length: TOTAL_QUESTIONS }, generateQuestion);
+    }
+
+
+    // ─── StartScreen component ────────────────────────────────────────────────────
+    // Shown before the game begins; calls onStart when the player is ready.
+    function StartScreen({ onStart }) {
+        return (
+            <div className="card">
+                <div style={{ fontSize: '3.5rem' }}>🧮</div>
+                <div className="start-title">Multiplication Quiz</div>
+                <p className="start-sub">
+                    Answer <strong>{TOTAL_QUESTIONS} questions</strong>.<br />
+                    Score <strong>70% or higher</strong> to win!
+                </p>
+                <button className="start-btn" onClick={onStart}>Start Game</button>
+            </div>
+        );
+    }
+
+
+    // ─── QuestionScreen component ─────────────────────────────────────────────────
+    // Renders the current question, progress bar, and four answer choices.
+    function QuestionScreen({ quiz, questionIndex, score, onAnswer }) {
+        // Local state: which button the player just clicked (for visual feedback)
+        const [selected, setSelected] = useState(null);
+
+        const question = quiz[questionIndex];
+
+        // Called when the player picks an answer
+        const handleChoice = (choice) => {
+            if (selected !== null) return;  // prevent double-clicking
+            setSelected(choice);
+
+            // Wait 800ms so the player can see the colour feedback, then advance
+            setTimeout(() => {
+                onAnswer(choice === question.correct);
+                setSelected(null);  // reset for the next question
+            }, 800);
+        };
+
+        // Determine CSS class for each button after the player has answered
+        const getClass = (choice) => {
+            if (selected === null) return 'choice-btn';
+            if (choice === question.correct) return 'choice-btn correct';
+            if (choice === selected)         return 'choice-btn wrong';
+            return 'choice-btn';
+        };
+
+        const progressPct = (questionIndex / TOTAL_QUESTIONS) * 100;
+
+        return (
+            <div className="card">
+                {/* Progress bar */}
+                <div className="progress-track">
+                    <div className="progress-fill" style={{ width: `${progressPct}%` }} />
+                </div>
+                <div className="progress-label">
+                    Question {questionIndex + 1} of {TOTAL_QUESTIONS} &nbsp;·&nbsp; Score: {score}
+                </div>
+
+                {/* The question */}
+                <div className="question">
+                    {question.a} × {question.b} = ?
+                </div>
+
+                {/* Feedback line — shown after the player selects an answer */}
+                <div className={`feedback ${selected === null ? '' : selected === question.correct ? 'ok' : 'bad'}`}>
+                    {selected === null
+                        ? ''
+                        : selected === question.correct
+                            ? '✅ Correct!'
+                            : `❌ The answer was ${question.correct}`}
+                </div>
+
+                {/* Answer choices */}
+                <div className="choices">
+                    {question.choices.map((choice, i) => (
+                        <button
+                            key={i}
+                            className={getClass(choice)}
+                            onClick={() => handleChoice(choice)}
+                            disabled={selected !== null}
+                        >
+                            {choice}
+                        </button>
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
+
+    // ─── ResultScreen component ───────────────────────────────────────────────────
+    // Shown after all 10 questions; displays score and win/lose outcome.
+    function ResultScreen({ score, onRestart }) {
+        const pct     = Math.round((score / TOTAL_QUESTIONS) * 100);
+        const passed  = score / TOTAL_QUESTIONS >= WIN_THRESHOLD;
+
+        return (
+            <div className="card">
+                <div className="result-emoji">{passed ? '🏆' : '😅'}</div>
+                <div className={`result-title ${passed ? 'win' : 'lose'}`}>
+                    {passed ? 'You Win!' : 'Try Again!'}
+                </div>
+                <div className="result-score">
+                    You got <strong>{score}</strong> out of <strong>{TOTAL_QUESTIONS}</strong> correct
+                </div>
+                {/* Colour the percentage based on pass/fail */}
+                <div className={`result-pct ${passed ? 'win' : 'lose'}`}>{pct}%</div>
+
+                {/* Simple breakdown bar */}
+                <div className="progress-track" style={{ marginBottom: '1.5rem' }}>
+                    <div
+                        className="progress-fill"
+                        style={{
+                            width: `${pct}%`,
+                            background: passed
+                                ? 'linear-gradient(90deg, #16a34a, #22c55e)'
+                                : 'linear-gradient(90deg, #dc2626, #f87171)'
+                        }}
+                    />
+                </div>
+
+                <button className="restart-btn" onClick={onRestart}>Play Again</button>
+            </div>
+        );
+    }
+
+
+    // ─── App — manages which screen to show and tracks game state ────────────────
+    // Three screens (phases):  'start' → 'playing' → 'result'
+    function App() {
+        const [phase,         setPhase]         = useState('start');   // current screen
+        const [quiz,          setQuiz]           = useState([]);        // array of question objects
+        const [questionIndex, setQuestionIndex]  = useState(0);        // which question we're on
+        const [score,         setScore]          = useState(0);        // number of correct answers
+
+        // Start a fresh game: generate new questions and reset counters
+        const handleStart = useCallback(() => {
+            setQuiz(generateQuiz());
+            setQuestionIndex(0);
+            setScore(0);
+            setPhase('playing');
+        }, []);
+
+        // Called by QuestionScreen after the player answers
+        const handleAnswer = useCallback((wasCorrect) => {
+            const newScore = wasCorrect ? score + 1 : score;
+            const nextIndex = questionIndex + 1;
+
+            if (wasCorrect) setScore(newScore);
+
+            if (nextIndex >= TOTAL_QUESTIONS) {
+                // All questions done — show result
+                setScore(newScore);   // ensure the final score is committed before phase change
+                setPhase('result');
+            } else {
+                setQuestionIndex(nextIndex);
+            }
+        }, [score, questionIndex]);
+
+        // Render the appropriate screen based on the current phase
+        if (phase === 'start')   return <StartScreen  onStart={handleStart} />;
+        if (phase === 'result')  return <ResultScreen score={score} onRestart={handleStart} />;
+
+        return (
+            <QuestionScreen
+                quiz={quiz}
+                questionIndex={questionIndex}
+                score={score}
+                onAnswer={handleAnswer}
+            />
+        );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+
+</script>
+</body>
+</html>

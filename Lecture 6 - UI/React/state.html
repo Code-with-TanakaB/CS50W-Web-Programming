@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>React - State (useState)</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 2rem; background: #f0f4f8; }
+        h1, h2 { color: #1e293b; }
+        .box {
+            background: white; border-radius: 8px; padding: 1.5rem;
+            max-width: 480px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+        button {
+            margin: 0.25rem; padding: 0.5rem 1.25rem; font-size: 1rem;
+            border: none; border-radius: 6px; cursor: pointer;
+            background: #2563eb; color: white;
+        }
+        button:hover { background: #1d4ed8; }
+        button.danger { background: #dc2626; }
+        button.danger:hover { background: #b91c1c; }
+        .big-number { font-size: 4rem; font-weight: bold; color: #2563eb; text-align: center; }
+        .toggle-text { font-size: 1.2rem; padding: 1rem; border-radius: 6px;
+                       background: #dbeafe; margin-bottom: 0.5rem; }
+        input { padding: 0.5rem; font-size: 1rem; border: 1px solid #cbd5e1;
+                border-radius: 6px; margin-right: 0.5rem; width: 200px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+
+        // ─── useState hook ────────────────────────────────────────────────────────────
+        // Hooks are special functions that let you "hook into" React features.
+        // useState is the most fundamental hook.
+        //
+        // Syntax:  const [value, setValue] = useState(initialValue);
+        //
+        //  • value      — the current state (read-only, like a snapshot)
+        //  • setValue   — the setter function; calling it updates state AND
+        //                 triggers React to re-render the component with the new value
+        //  • initialValue — the starting value (only used on the very first render)
+        //
+        // Destructure useState from the global React object (since we use CDN, not import)
+        const { useState } = React;
+
+
+        // ─── Demo 1: Simple counter ───────────────────────────────────────────────────
+        function Counter() {
+            // Declare a state variable "count" with an initial value of 0
+            const [count, setCount] = useState(0);
+
+            // Every time setCount() is called, React re-runs this function
+            // and the UI updates to show the new count — automatically.
+            return (
+                <div className="box">
+                    <h2>Demo 1 — Simple Counter</h2>
+                    <div className="big-number">{count}</div>
+                    <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                        {/* Arrow functions are used here so the call only happens on click,
+                            not immediately when the component renders */}
+                        <button onClick={() => setCount(count - 1)}>−</button>
+                        <button onClick={() => setCount(0)} className="danger">Reset</button>
+                        <button onClick={() => setCount(count + 1)}>+</button>
+                    </div>
+                    <p style={{ textAlign: 'center', color: '#64748b' }}>
+                        {/* Ternary expression for inline conditional rendering */}
+                        {count > 0 ? 'Positive' : count < 0 ? 'Negative' : 'Zero'}
+                    </p>
+                </div>
+            );
+        }
+
+
+        // ─── Demo 2: Boolean toggle ───────────────────────────────────────────────────
+        function Toggle() {
+            // State can be any type: boolean, string, number, array, object…
+            const [isVisible, setIsVisible] = useState(true);
+
+            return (
+                <div className="box">
+                    <h2>Demo 2 — Boolean Toggle</h2>
+                    {/* Conditional rendering: show element only when isVisible is true */}
+                    {isVisible && (
+                        <div className="toggle-text">
+                            👋 I am visible! Click the button to hide me.
+                        </div>
+                    )}
+                    {/* Functional update form: prev => !prev reads the latest state value.
+                        This is safer than  setIsVisible(!isVisible)  when updates are batched. */}
+                    <button onClick={() => setIsVisible(prev => !prev)}>
+                        {isVisible ? 'Hide' : 'Show'}
+                    </button>
+                </div>
+            );
+        }
+
+
+        // ─── Demo 3: Controlled input ─────────────────────────────────────────────────
+        // A "controlled input" is one whose value is driven entirely by React state.
+        // React owns the value; the DOM just displays it.
+        function ControlledInput() {
+            const [text, setText] = useState('');
+
+            return (
+                <div className="box">
+                    <h2>Demo 3 — Controlled Input</h2>
+                    <p style={{ color: '#64748b', fontSize: '0.9rem' }}>
+                        The input's value is stored in React state, not in the DOM.
+                    </p>
+                    <input
+                        // value comes FROM state — React controls what the input shows
+                        value={text}
+                        // onChange fires on every keystroke; we update state with the new value
+                        onChange={event => setText(event.target.value)}
+                        placeholder="Type something…"
+                    />
+                    <button className="danger" onClick={() => setText('')}>Clear</button>
+
+                    {/* Live reflection: state updates cause an immediate re-render */}
+                    {text && (
+                        <p style={{ marginTop: '1rem' }}>
+                            You typed: <strong>{text}</strong>
+                            &nbsp;({text.length} character{text.length !== 1 ? 's' : ''})
+                        </p>
+                    )}
+                </div>
+            );
+        }
+
+
+        // ─── Demo 4: Object state ─────────────────────────────────────────────────────
+        // When state is an object, always create a NEW object when updating —
+        // never mutate the existing one. React detects changes by reference.
+        function UserForm() {
+            const [user, setUser] = useState({ firstName: '', lastName: '' });
+
+            // Spread operator merges the previous user object with the changed field.
+            // This is the correct pattern for updating object state.
+            const handleChange = (field, value) => {
+                setUser(prev => ({ ...prev, [field]: value }));
+            };
+
+            const fullName = `${user.firstName} ${user.lastName}`.trim();
+
+            return (
+                <div className="box">
+                    <h2>Demo 4 — Object State</h2>
+                    <div style={{ marginBottom: '0.75rem' }}>
+                        <input
+                            value={user.firstName}
+                            onChange={e => handleChange('firstName', e.target.value)}
+                            placeholder="First name"
+                        />
+                    </div>
+                    <div style={{ marginBottom: '0.75rem' }}>
+                        <input
+                            value={user.lastName}
+                            onChange={e => handleChange('lastName', e.target.value)}
+                            placeholder="Last name"
+                        />
+                    </div>
+                    {fullName && (
+                        <p>Hello, <strong>{fullName}</strong>!</p>
+                    )}
+                </div>
+            );
+        }
+
+
+        function App() {
+            return (
+                <div>
+                    <h1>React Fundamentals — State (useState)</h1>
+                    <Counter />
+                    <Toggle />
+                    <ControlledInput />
+                    <UserForm />
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+
+    </script>
+</body>
+</html>
